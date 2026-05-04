@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>乐魂头像制作器</title>
+  <style>
+    :root {
+      --grass: #4caf35;
+      --grass-dark: #2f7d22;
+      --dirt: #7a4a24;
+      --dirt-dark: #4f2d16;
+      --stone: #8b8b8b;
+      --stone-dark: #555;
+      --sand: #d8c58a;
+      --panel: rgba(28, 24, 19, 0.92);
+      --text: #f6f1d8;
+      --muted: #c9bd98;
+      --danger: #ff6b6b;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      background:
+        linear-gradient(45deg, rgba(0,0,0,.08) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0,0,0,.08) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.05) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.05) 75%),
+        linear-gradient(#75b843 0 18%, #7a4a24 18% 100%);
+      background-size: 48px 48px, 48px 48px, 48px 48px, 48px 48px, cover;
+      background-position: 0 0, 0 24px, 24px -24px, -24px 0, center;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      border: 5px solid #1d1d1d;
+      background: linear-gradient(#5bbd38 0 42%, #3d8c28 42% 100%);
+      box-shadow: 8px 8px 0 var(--shadow);
+      padding: 18px;
+      margin-bottom: 22px;
+      text-align: center;
+      image-rendering: pixelated;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 52px);
+      letter-spacing: 4px;
+      text-shadow: 3px 3px 0 #1f5217, 5px 5px 0 rgba(0,0,0,.32);
+    }
+
+    .subtitle {
+      margin: 10px auto 0;
+      color: #fff9c8;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .panel {
+      border: 5px solid #1d1d1d;
+      background: var(--panel);
+      box-shadow: 8px 8px 0 var(--shadow);
+      padding: 18px;
+    }
+
+    .step {
+      display: none;
+      animation: pop .18s ease-out;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    @keyframes pop {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .upload-card {
+      border: 4px dashed #111;
+      background: linear-gradient(135deg, #5a5a5a, #3b3b3b);
+      padding: 28px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    }
+
+    .upload-card.drag-over {
+      border-color: #fff4b0;
+      filter: brightness(1.15);
+      transform: translateY(-4px);
+      background: linear-gradient(135deg, #6ecf45, #3d8c28);
+    }
+
+    .upload-icon {
+      width: 88px;
+      height: 88px;
+      border: 4px solid #111;
+      background: linear-gradient(#9ad86e 0 45%, #4a9a32 45% 100%);
+      box-shadow: inset 4px 4px 0 rgba(255,255,255,.35), inset -4px -4px 0 rgba(0,0,0,.28), 5px 5px 0 rgba(0,0,0,.4);
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+      margin-bottom: 16px;
+    }
+
+    .upload-card h2,
+    .editor-title {
+      margin: 0 0 12px;
+      font-size: 22px;
+      color: #fff5b7;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .tip {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0 0 14px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .pixel-btn,
+    .file-label {
+      appearance: none;
+      border: 4px solid #111;
+      background: linear-gradient(#b9b9b9 0 45%, #777 45% 100%);
+      color: #111;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 900;
+      padding: 12px 16px;
+      text-decoration: none;
+      box-shadow: inset 3px 3px 0 rgba(255,255,255,.45), inset -3px -3px 0 rgba(0,0,0,.28), 4px 4px 0 rgba(0,0,0,.45);
+      transition: transform .08s ease, filter .12s ease;
+      user-select: none;
+    }
+
+    .pixel-btn:hover,
+    .file-label:hover {
+      filter: brightness(1.08);
+    }
+
+    .pixel-btn:active,
+    .file-label:active {
+      transform: translate(3px, 3px);
+      box-shadow: inset 3px 3px 0 rgba(0,0,0,.25), 1px 1px 0 rgba(0,0,0,.45);
+    }
+
+    .pixel-btn.primary {
+      background: linear-gradient(#7ee35c 0 45%, #3a9e28 45% 100%);
+    }
+
+    .pixel-btn.gold {
+      background: linear-gradient(#ffe08a 0 45%, #c99122 45% 100%);
+    }
+
+    .pixel-btn.danger {
+      background: linear-gradient(#ff9696 0 45%, #bd3c3c 45% 100%);
+      color: #210606;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 24px;
+      color: #b9ffb2;
+      font-weight: 800;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .crop-layout,
+    .compose-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage-wrap {
+      border: 5px solid #111;
+      background:
+        linear-gradient(45deg, #5b5b5b 25%, transparent 25%),
+        linear-gradient(-45deg, #5b5b5b 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #5b5b5b 75%),
+        linear-gradient(-45deg, transparent 75%, #5b5b5b 75%),
+        #777;
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+      padding: 14px;
+      overflow: auto;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      margin: 0 auto;
+      image-rendering: auto;
+      background: transparent;
+    }
+
+    #cropCanvas {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #cropCanvas.dragging {
+      cursor: grabbing;
+    }
+
+    .side-panel {
+      border: 4px solid #111;
+      background: linear-gradient(135deg, #6c421f, #4b2a13);
+      padding: 16px;
+    }
+
+    .control {
+      margin-bottom: 16px;
+    }
+
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 900;
+      color: #fff4b0;
+      margin-bottom: 8px;
+    }
+
+    .control small {
+      color: #eadfb2;
+      display: block;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--grass);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .hidden-note {
+      margin-top: 14px;
+      padding: 10px;
+      border-left: 6px solid #72d75a;
+      background: rgba(0,0,0,.25);
+      color: #efe7c4;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 860px) {
+      .crop-layout,
+      .compose-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>乐魂头像制作器</h1>
+      <p class="subtitle">上传头像 → 裁剪为 1:1 → 自动合成乐魂 → 实时调整 → 保存头像</p>
+    </header>
+
+    <section id="stepUpload" class="step active panel">
+      <div id="avatarDropZone" class="upload-card" role="button" tabindex="0" aria-label="导入头像，支持点击或拖拽上传">
+        <div class="upload-icon">⬆</div>
+        <h2>导入头像</h2>
+        <p class="tip">点击选择图片，或直接把头像拖到这里。上传后会自动进入裁剪页面，你可以拖动与缩放图片，裁剪成 1:1。</p>
+        <label class="file-label" for="avatarInput">选择头像图片</label>
+        <input class="file-input" id="avatarInput" type="file" accept="image/*" />
+        <div id="avatarStatus" class="status"></div>
+      </div>
+
+      <div class="hidden-note">
+        请把默认乐魂素材命名为 <strong>1.png</strong>，并与这个 HTML 文件放在同一个文件夹里。裁剪完成后可在编辑页面自定义上传 PNG 透明贴纸。
+      </div>
+    </section>
+
+    <section id="stepCrop" class="step panel">
+      <h2 class="editor-title">裁剪头像为 1:1</h2>
+      <div class="crop-layout">
+        <div class="stage-wrap">
+          <canvas id="cropCanvas" width="720" height="720"></canvas>
+        </div>
+        <aside class="side-panel">
+          <div class="control">
+            <label>缩放 <span id="zoomValue">100%</span></label>
+            <input id="zoomRange" type="range" min="0.1" max="5" step="0.01" value="1" />
+            <small>拖动左侧图片调整位置；滚轮也可以缩放。</small>
+          </div>
+          <div class="row">
+            <button id="cropBackBtn" class="pixel-btn danger" type="button">返回</button>
+            <button id="cropDoneBtn" class="pixel-btn primary" type="button">完成裁剪</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="stepCompose" class="step panel">
+      <h2 class="editor-title">调整乐魂合成位置</h2>
+      <div class="compose-layout">
+        <div class="stage-wrap">
+          <canvas id="resultCanvas" width="1024" height="1024"></canvas>
+        </div>
+        <aside class="side-panel">
+          <div class="control">
+            <label>自定义透明贴纸</label>
+            <label class="file-label" for="soulInput">上传 PNG 贴纸</label>
+            <input class="file-input" id="soulInput" type="file" accept="image/png" />
+            <small>仅支持 PNG 格式，建议使用透明底。上传后会立即替换当前乐魂素材。</small>
+            <div id="soulStatus" class="status">默认素材：1.png</div>
+          </div>
+
+          <div class="control">
+            <label>X 位置 <span id="xLabel">0</span></label>
+            <input id="xRange" type="range" min="-1024" max="2048" step="1" value="0" />
+            <small>单位为最终头像像素。可把素材移出画面外。</small>
+          </div>
+
+          <div class="control">
+            <label>Y 位置 <span id="yLabel">0</span></label>
+            <input id="yRange" type="range" min="-1024" max="2048" step="1" value="0" />
+          </div>
+
+          <div class="control">
+            <label>乐魂宽度 <span id="sizeLabel">0</span></label>
+            <input id="sizeRange" type="range" min="16" max="1024" step="1" value="240" />
+          </div>
+
+          <div class="control">
+            <label>旋转角度 <span id="rotationLabel">0°</span></label>
+            <input id="rotationRange" type="range" min="-180" max="180" step="1" value="0" />
+            <small>围绕贴纸中心旋转。正数为顺时针，负数为逆时针。</small>
+          </div>
+
+          <div class="row">
+            <button id="resetBtn" class="pixel-btn" type="button">重置位置</button>
+            <button id="saveBtn" class="pixel-btn gold" type="button">保存 PNG</button>
+            <button id="newBtn" class="pixel-btn danger" type="button">重新制作</button>
+          </div>
+
+<div class="hidden-note">
+  此网站由抖音勿语使用ChatGPT开发 
+  <a href="https://v.douyin.com/BYXcFPQFsR8/" target="_blank" style="color:#409eff;text-decoration:none;">点击此处</a>
+  前往个人主页
+</div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ==============================
+    // 可调默认参数区
+    // ==============================
+
+    // 最终导出头像尺寸。
+    const OUTPUT_SIZE = 1024;
+
+    // 默认乐魂位置与尺寸。
+    const DEFAULT_SOUL_X = 553;
+    const DEFAULT_SOUL_Y = 553;
+    const DEFAULT_SOUL_WIDTH = 621;
+
+    // 默认乐魂旋转角度，单位是度。正数为顺时针，负数为逆时针。
+    // 这里原代码重复声明了 DEFAULT_SOUL_ROTATION，会导致整段 JS 直接无法运行。
+    const DEFAULT_SOUL_ROTATION = -3;
+
+    // 默认乐魂素材路径，请把 1.png 放在 HTML 同目录。
+    const DEFAULT_SOUL_SRC = "1.png";
+
+    const stepUpload = document.getElementById("stepUpload");
+    const stepCrop = document.getElementById("stepCrop");
+    const stepCompose = document.getElementById("stepCompose");
+
+    const avatarDropZone = document.getElementById("avatarDropZone");
+    const avatarInput = document.getElementById("avatarInput");
+    const soulInput = document.getElementById("soulInput");
+    const avatarStatus = document.getElementById("avatarStatus");
+    const soulStatus = document.getElementById("soulStatus");
+
+    const cropCanvas = document.getElementById("cropCanvas");
+    const cropCtx = cropCanvas.getContext("2d");
+    const zoomRange = document.getElementById("zoomRange");
+    const zoomValue = document.getElementById("zoomValue");
+    const cropDoneBtn = document.getElementById("cropDoneBtn");
+    const cropBackBtn = document.getElementById("cropBackBtn");
+
+    const resultCanvas = document.getElementById("resultCanvas");
+    const resultCtx = resultCanvas.getContext("2d");
+
+    const xRange = document.getElementById("xRange");
+    const yRange = document.getElementById("yRange");
+    const sizeRange = document.getElementById("sizeRange");
+    const rotationRange = document.getElementById("rotationRange");
+    const xLabel = document.getElementById("xLabel");
+    const yLabel = document.getElementById("yLabel");
+    const sizeLabel = document.getElementById("sizeLabel");
+    const rotationLabel = document.getElementById("rotationLabel");
+    const resetBtn = document.getElementById("resetBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const newBtn = document.getElementById("newBtn");
+
+    const cropState = {
+      image: null,
+      scale: 1,
+      minScale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      dragging: false,
+      lastX: 0,
+      lastY: 0,
+    };
+
+    const composeState = {
+      croppedImage: null,
+      soulImage: null,
+      soulX: DEFAULT_SOUL_X,
+      soulY: DEFAULT_SOUL_Y,
+      soulWidth: DEFAULT_SOUL_WIDTH,
+      soulRotation: DEFAULT_SOUL_ROTATION,
+    };
+
+    function showStep(step) {
+      [stepUpload, stepCrop, stepCompose].forEach(el => el.classList.remove("active"));
+      step.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function setStatus(el, text, isError = false) {
+      if (!el) return;
+      el.textContent = text;
+      el.classList.toggle("error", isError);
+    }
+
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const img = new Image();
+
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("图片读取失败"));
+
+          img.src = reader.result;
+        };
+
+        reader.onerror = () => reject(new Error("文件读取失败"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadDefaultSoul() {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("未能读取到默认素材 1.png，可在编辑页手动上传 PNG 贴纸"));
+
+        img.src = DEFAULT_SOUL_SRC + "?t=" + Date.now();
+      });
+    }
+
+    async function ensureSoulLoaded() {
+      if (composeState.soulImage) return true;
+
+      try {
+        composeState.soulImage = await loadDefaultSoul();
+        setStatus(soulStatus, "已读取到默认素材：1.png");
+        return true;
+      } catch (err) {
+        setStatus(soulStatus, err.message, true);
+        return false;
+      }
+    }
+
+    function fitImageForCrop(img) {
+      const canvasSize = cropCanvas.width;
+
+      cropState.minScale = Math.max(canvasSize / img.width, canvasSize / img.height);
+      cropState.scale = cropState.minScale;
+      cropState.offsetX = (canvasSize - img.width * cropState.scale) / 2;
+      cropState.offsetY = (canvasSize - img.height * cropState.scale) / 2;
+
+      zoomRange.min = cropState.minScale.toFixed(3);
+      zoomRange.max = Math.max(cropState.minScale * 6, 5).toFixed(3);
+      zoomRange.value = cropState.scale;
+
+      updateZoomLabel();
+      drawCropCanvas();
+    }
+
+    function updateZoomLabel() {
+      const base = cropState.minScale || 1;
+      zoomValue.textContent = Math.round((cropState.scale / base) * 100) + "%";
+    }
+
+    function clampCropOffset() {
+      const img = cropState.image;
+      if (!img) return;
+
+      const size = cropCanvas.width;
+      const w = img.width * cropState.scale;
+      const h = img.height * cropState.scale;
+
+      if (w <= size) {
+        cropState.offsetX = (size - w) / 2;
+      } else {
+        cropState.offsetX = Math.min(0, Math.max(size - w, cropState.offsetX));
+      }
+
+      if (h <= size) {
+        cropState.offsetY = (size - h) / 2;
+      } else {
+        cropState.offsetY = Math.min(0, Math.max(size - h, cropState.offsetY));
+      }
+    }
+
+    function drawCropCanvas() {
+      const size = cropCanvas.width;
+
+      cropCtx.clearRect(0, 0, size, size);
+      cropCtx.fillStyle = "#202020";
+      cropCtx.fillRect(0, 0, size, size);
+
+      if (!cropState.image) return;
+
+      clampCropOffset();
+
+      cropCtx.drawImage(
+        cropState.image,
+        cropState.offsetX,
+        cropState.offsetY,
+        cropState.image.width * cropState.scale,
+        cropState.image.height * cropState.scale
+      );
+
+      cropCtx.save();
+
+      cropCtx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+      cropCtx.lineWidth = 5;
+      cropCtx.strokeRect(2.5, 2.5, size - 5, size - 5);
+
+      cropCtx.strokeStyle = "rgba(0, 0, 0, 0.45)";
+      cropCtx.lineWidth = 2;
+
+      for (let i = 1; i < 3; i++) {
+        const p = (size / 3) * i;
+
+        cropCtx.beginPath();
+        cropCtx.moveTo(p, 0);
+        cropCtx.lineTo(p, size);
+        cropCtx.moveTo(0, p);
+        cropCtx.lineTo(size, p);
+        cropCtx.stroke();
+      }
+
+      cropCtx.restore();
+    }
+
+    function getCanvasPointer(event, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const source = event.touches ? event.touches[0] : event;
+
+      return {
+        x: (source.clientX - rect.left) * (canvas.width / rect.width),
+        y: (source.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function createCroppedImage() {
+      const out = document.createElement("canvas");
+      out.width = OUTPUT_SIZE;
+      out.height = OUTPUT_SIZE;
+
+      const ctx = out.getContext("2d");
+      const ratio = OUTPUT_SIZE / cropCanvas.width;
+
+      ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      ctx.drawImage(
+        cropState.image,
+        cropState.offsetX * ratio,
+        cropState.offsetY * ratio,
+        cropState.image.width * cropState.scale * ratio,
+        cropState.image.height * cropState.scale * ratio
+      );
+
+      const img = new Image();
+      img.src = out.toDataURL("image/png");
+      return img;
+    }
+
+    function resetComposeControls() {
+      composeState.soulX = DEFAULT_SOUL_X;
+      composeState.soulY = DEFAULT_SOUL_Y;
+      composeState.soulWidth = DEFAULT_SOUL_WIDTH;
+      composeState.soulRotation = DEFAULT_SOUL_ROTATION;
+
+      xRange.min = -OUTPUT_SIZE;
+      xRange.max = OUTPUT_SIZE * 2;
+
+      yRange.min = -OUTPUT_SIZE;
+      yRange.max = OUTPUT_SIZE * 2;
+
+      sizeRange.min = 16;
+      sizeRange.max = OUTPUT_SIZE;
+
+      rotationRange.min = -180;
+      rotationRange.max = 180;
+
+      xRange.value = composeState.soulX;
+      yRange.value = composeState.soulY;
+      sizeRange.value = composeState.soulWidth;
+      rotationRange.value = composeState.soulRotation;
+
+      drawResult();
+    }
+
+    function drawResult() {
+      resultCtx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+      resultCtx.imageSmoothingEnabled = true;
+      resultCtx.imageSmoothingQuality = "high";
+
+      if (composeState.croppedImage) {
+        resultCtx.drawImage(composeState.croppedImage, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+      }
+
+      if (composeState.soulImage) {
+        const ratio = composeState.soulImage.height / composeState.soulImage.width;
+        const soulHeight = composeState.soulWidth * ratio;
+
+        const centerX = composeState.soulX + composeState.soulWidth / 2;
+        const centerY = composeState.soulY + soulHeight / 2;
+
+        const radians = composeState.soulRotation * Math.PI / 180;
+
+        resultCtx.save();
+        resultCtx.translate(centerX, centerY);
+        resultCtx.rotate(radians);
+
+        resultCtx.drawImage(
+          composeState.soulImage,
+          -composeState.soulWidth / 2,
+          -soulHeight / 2,
+          composeState.soulWidth,
+          soulHeight
+        );
+
+        resultCtx.restore();
+      }
+
+      xLabel.textContent = composeState.soulX;
+      yLabel.textContent = composeState.soulY;
+      sizeLabel.textContent = composeState.soulWidth;
+      rotationLabel.textContent = composeState.soulRotation + "°";
+    }
+
+    async function handleAvatarFile(file) {
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        setStatus(avatarStatus, "请导入图片文件", true);
+        return;
+      }
+
+      try {
+        setStatus(avatarStatus, "正在读取头像...");
+
+        cropState.image = await loadImageFromFile(file);
+        fitImageForCrop(cropState.image);
+
+        // 默认素材可以提前尝试加载，但失败不阻止裁剪流程。
+        await ensureSoulLoaded();
+
+        setStatus(avatarStatus, "头像已载入，请裁剪");
+        showStep(stepCrop);
+      } catch (err) {
+        setStatus(avatarStatus, err.message || "头像读取失败", true);
+      }
+    }
+
+    avatarInput.addEventListener("change", async (event) => {
+      await handleAvatarFile(event.target.files[0]);
+    });
+
+    avatarDropZone.addEventListener("click", (event) => {
+      if (event.target === avatarInput || event.target.closest("label")) return;
+      avatarInput.click();
+    });
+
+    avatarDropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        avatarInput.click();
+      }
+    });
+
+    ["dragenter", "dragover"].forEach(type => {
+      avatarDropZone.addEventListener(type, (event) => {
+        event.preventDefault();
+        avatarDropZone.classList.add("drag-over");
+        setStatus(avatarStatus, "松开鼠标即可导入头像");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(type => {
+      avatarDropZone.addEventListener(type, (event) => {
+        event.preventDefault();
+        avatarDropZone.classList.remove("drag-over");
+      });
+    });
+
+    avatarDropZone.addEventListener("drop", async (event) => {
+      const file = event.dataTransfer.files[0];
+      await handleAvatarFile(file);
+    });
+
+    soulInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.type !== "image/png" && !file.name.toLowerCase().endsWith(".png")) {
+        setStatus(soulStatus, "乐魂素材必须是 PNG 格式，建议透明底", true);
+        soulInput.value = "";
+        return;
+      }
+
+      try {
+        composeState.soulImage = await loadImageFromFile(file);
+        setStatus(soulStatus, "自定义 PNG 贴纸已载入");
+
+        if (stepCompose.classList.contains("active")) {
+          drawResult();
+        }
+      } catch (err) {
+        setStatus(soulStatus, err.message || "贴纸读取失败", true);
+      }
+    });
+
+    zoomRange.addEventListener("input", () => {
+      const oldScale = cropState.scale;
+      const newScale = Number(zoomRange.value);
+
+      if (!oldScale || !newScale) return;
+
+      const center = cropCanvas.width / 2;
+
+      cropState.offsetX = center - (center - cropState.offsetX) * (newScale / oldScale);
+      cropState.offsetY = center - (center - cropState.offsetY) * (newScale / oldScale);
+      cropState.scale = newScale;
+
+      updateZoomLabel();
+      drawCropCanvas();
+    });
+
+    cropCanvas.addEventListener("mousedown", (event) => {
+      if (!cropState.image) return;
+
+      cropState.dragging = true;
+      cropCanvas.classList.add("dragging");
+
+      const p = getCanvasPointer(event, cropCanvas);
+      cropState.lastX = p.x;
+      cropState.lastY = p.y;
+    });
+
+    window.addEventListener("mousemove", (event) => {
+      if (!cropState.dragging) return;
+
+      const p = getCanvasPointer(event, cropCanvas);
+
+      cropState.offsetX += p.x - cropState.lastX;
+      cropState.offsetY += p.y - cropState.lastY;
+
+      cropState.lastX = p.x;
+      cropState.lastY = p.y;
+
+      drawCropCanvas();
+    });
+
+    window.addEventListener("mouseup", () => {
+      cropState.dragging = false;
+      cropCanvas.classList.remove("dragging");
+    });
+
+    cropCanvas.addEventListener("touchstart", (event) => {
+      if (!cropState.image) return;
+
+      event.preventDefault();
+
+      cropState.dragging = true;
+
+      const p = getCanvasPointer(event, cropCanvas);
+      cropState.lastX = p.x;
+      cropState.lastY = p.y;
+    }, { passive: false });
+
+    cropCanvas.addEventListener("touchmove", (event) => {
+      event.preventDefault();
+
+      if (!cropState.dragging) return;
+
+      const p = getCanvasPointer(event, cropCanvas);
+
+      cropState.offsetX += p.x - cropState.lastX;
+      cropState.offsetY += p.y - cropState.lastY;
+
+      cropState.lastX = p.x;
+      cropState.lastY = p.y;
+
+      drawCropCanvas();
+    }, { passive: false });
+
+    cropCanvas.addEventListener("touchend", () => {
+      cropState.dragging = false;
+    });
+
+    cropCanvas.addEventListener("wheel", (event) => {
+      if (!cropState.image) return;
+
+      event.preventDefault();
+
+      const delta = event.deltaY < 0 ? 1.06 : 0.94;
+      const oldScale = cropState.scale;
+
+      let newScale = oldScale * delta;
+      newScale = Math.min(Number(zoomRange.max), Math.max(Number(zoomRange.min), newScale));
+
+      const p = getCanvasPointer(event, cropCanvas);
+
+      cropState.offsetX = p.x - (p.x - cropState.offsetX) * (newScale / oldScale);
+      cropState.offsetY = p.y - (p.y - cropState.offsetY) * (newScale / oldScale);
+      cropState.scale = newScale;
+
+      zoomRange.value = newScale;
+
+      updateZoomLabel();
+      drawCropCanvas();
+    }, { passive: false });
+
+    cropBackBtn.addEventListener("click", () => {
+      showStep(stepUpload);
+    });
+
+    cropDoneBtn.addEventListener("click", async () => {
+      if (!cropState.image) return;
+
+      await ensureSoulLoaded();
+
+      composeState.croppedImage = createCroppedImage();
+
+      composeState.croppedImage.onload = () => {
+        resetComposeControls();
+        showStep(stepCompose);
+      };
+
+      composeState.croppedImage.onerror = () => {
+        setStatus(avatarStatus, "裁剪图片生成失败，请重新上传头像", true);
+        showStep(stepUpload);
+      };
+    });
+
+    [xRange, yRange, sizeRange, rotationRange].forEach(input => {
+      input.addEventListener("input", () => {
+        composeState.soulX = Number(xRange.value);
+        composeState.soulY = Number(yRange.value);
+        composeState.soulWidth = Number(sizeRange.value);
+        composeState.soulRotation = Number(rotationRange.value);
+
+        drawResult();
+      });
+    });
+
+    resetBtn.addEventListener("click", resetComposeControls);
+
+    saveBtn.addEventListener("click", () => {
+      drawResult();
+
+      const link = document.createElement("a");
+      link.download = "乐魂头像.png";
+      link.href = resultCanvas.toDataURL("image/png");
+      link.click();
+    });
+
+    newBtn.addEventListener("click", () => {
+      avatarInput.value = "";
+      soulInput.value = "";
+
+      cropState.image = null;
+      composeState.croppedImage = null;
+
+      setStatus(avatarStatus, "");
+      showStep(stepUpload);
+    });
+
+    ensureSoulLoaded();
+  </script>
+</body>
+</html>
