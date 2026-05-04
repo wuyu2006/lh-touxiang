@@ -312,7 +312,7 @@
       </div>
 
       <div class="hidden-note">
-        请把默认乐魂素材命名为 <strong>1.png</strong>，并与这个 HTML 文件放在同一个文件夹里。裁剪完成后可在编辑页面自定义上传 PNG 透明贴纸。
+        点击按钮或拖动将头像导入到上方，本网站为静态网站，本地运行，不会收集个人数据
       </div>
     </section>
 
@@ -326,7 +326,7 @@
           <div class="control">
             <label>缩放 <span id="zoomValue">100%</span></label>
             <input id="zoomRange" type="range" min="0.1" max="5" step="0.01" value="1" />
-            <small>拖动左侧图片调整位置；滚轮也可以缩放。</small>
+            <small>拖动左侧图片调整位置，面板可以控制缩放，如果是电脑可以用滚轮缩放</small>
           </div>
           <div class="row">
             <button id="cropBackBtn" class="pixel-btn danger" type="button">返回</button>
@@ -337,7 +337,7 @@
     </section>
 
     <section id="stepCompose" class="step panel">
-      <h2 class="editor-title">调整乐魂合成位置</h2>
+      <h2 class="editor-title">调整乐魂位置</h2>
       <div class="compose-layout">
         <div class="stage-wrap">
           <canvas id="resultCanvas" width="1024" height="1024"></canvas>
@@ -347,14 +347,14 @@
             <label>自定义透明贴纸</label>
             <label class="file-label" for="soulInput">上传 PNG 贴纸</label>
             <input class="file-input" id="soulInput" type="file" accept="image/png" />
-            <small>仅支持 PNG 格式，建议使用透明底。上传后会立即替换当前乐魂素材。</small>
-            <div id="soulStatus" class="status">默认素材：1.png</div>
+            <small>仅支持PNG格式，建议使用透明底 上传后会立即替换当前乐魂素材</small>
+            <div id="soulStatus" class="status">默认素材：乐魂.png</div>
           </div>
 
           <div class="control">
             <label>X 位置 <span id="xLabel">0</span></label>
             <input id="xRange" type="range" min="-1024" max="2048" step="1" value="0" />
-            <small>单位为最终头像像素。可把素材移出画面外。</small>
+            <small>可自定义调整素材位置</small>
           </div>
 
           <div class="control">
@@ -370,7 +370,7 @@
           <div class="control">
             <label>旋转角度 <span id="rotationLabel">0°</span></label>
             <input id="rotationRange" type="range" min="-180" max="180" step="1" value="0" />
-            <small>围绕贴纸中心旋转。正数为顺时针，负数为逆时针。</small>
+            <small>可以调整乐魂旋转角度</small>
           </div>
 
           <div class="row">
@@ -496,7 +496,7 @@
         const img = new Image();
 
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("未能读取到默认素材 1.png，可在编辑页手动上传 PNG 贴纸"));
+        img.onerror = () => reject(new Error("未能读取到默认素材，可在编辑页手动上传 PNG 贴纸"));
 
         img.src = DEFAULT_SOUL_SRC + "?t=" + Date.now();
       });
@@ -507,7 +507,7 @@
 
       try {
         composeState.soulImage = await loadDefaultSoul();
-        setStatus(soulStatus, "已读取到默认素材：1.png");
+        setStatus(soulStatus, "已读取到默认素材，可正常使用，如果无法使用可以自定义导入");
         return true;
       } catch (err) {
         setStatus(soulStatus, err.message, true);
